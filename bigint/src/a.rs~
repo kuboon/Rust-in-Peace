@@ -1,0 +1,20 @@
+extern crate num_bigint; // 0.2.2
+extern crate num_traits; // 0.2.8
+use num_bigint::BigInt;
+use num_traits::Pow;
+
+const X: i128 = -80_538_738_812_075_974; 
+const Y: i128 = 80_435_758_145_817_515;
+const Z: i128 = 12_602_123_297_335_631;
+
+fn main() {
+    let x: BigInt = X.into();
+    let y: BigInt = Y.into();
+    let z: BigInt = Z.into();
+
+    let lhs = x.pow(3u32) + y.pow(3u32) + z.pow(3u32);
+    println!("X^3+Y^3+Z^3 = {}", lhs );
+
+    let rhs: BigInt = 42.into();
+    assert_eq!( lhs, rhs );
+}
