@@ -1,0 +1,9 @@
+fn main() {
+let (l,k,t);
+l=2;
+k=3;
+t=0;
+t=l*k;
+
+    println!("Hello, world!\n", {%d\n},t);
+}
