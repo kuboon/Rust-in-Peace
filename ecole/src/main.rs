@@ -56,7 +56,7 @@ let normal: [i32; 14]= [
     
     bit = bit << 1; //原始多項式の次数を1上げる。
   }
-println!("static const unsigned short gf[{}]=", o);
+println!("static const unsigned short gf[{}]={{", o);
 
 
   for j in 0..256
@@ -65,10 +65,10 @@ println!("static const unsigned short gf[{}]=", o);
       
   }
 
-  println!(";");
+  println!("}};");
   
   
-  println!("static const unsigned short fg[256]=");
+  println!("static const unsigned short fg[256]={{");
   for i in 0..256
     {
       for j in 0..256
@@ -85,5 +85,5 @@ println!("static const unsigned short gf[{}]=", o);
         print!("{},", fg[i]);
     }
 
-    println!(";\n");
+    println!("}};\n");
 }
