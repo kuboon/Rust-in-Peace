@@ -65,7 +65,7 @@ println!("static const unsigned short gf[{}]=", o);
       
   }
 
-  println!("\};");
+  println!(";");
   
   
   println!("static const unsigned short fg[256]=");
