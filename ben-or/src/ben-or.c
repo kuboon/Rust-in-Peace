@@ -12,14 +12,9 @@
 #include <time.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <sys/mman.h>
 #include <assert.h>
 #include <execinfo.h>
 
@@ -30,12 +25,7 @@
 #include "debug.c"
 #include "chash.c"
 
-//#define TH omp_get_max_threads()
-#define REG 64
 
-//#pragma omp threadprivate(mat)
-//シンドロームのコピー
-unsigned short sy[K] = {0};
 
 //Goppa多項式
 static unsigned short g[K + 1] = {1, 0, 0, 0, 1, 0, 1};
