@@ -109,23 +109,6 @@ OP v2o(vec a)
   return f;
 }
 
-OP v4x(vec a)
-{
-  OP x = {0};
-  int i, count = 0;
-
-  for (i = 0; i < DEG; i++)
-  {
-    if (a.x[i] > 0)
-    {
-      x.t[count].a = a.x[i];
-      x.t[count++].n = i;
-    }
-  }
-
-  return x;
-}
-
 //停止コマンド
 void wait(void)
 {
@@ -216,7 +199,7 @@ void oprintpol(OP f)
   }
 }
 
-/*
+
 void op_print_raw(const OP f)
 {
   puts("op_print_raw:");
@@ -258,7 +241,7 @@ bool op_verify(const OP f)
   }
   return true;
 }
-*/
+
 
 //20200816:正規化したいところだがうまく行かない
 //多項式の足し算
