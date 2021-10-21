@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <sys/wait.h>
+#include <sys/types.h>
 
 #include "8192.h"
 //#include "4096.h"
@@ -31,6 +31,10 @@
 #include "chash.c"
 
 #include <pthread.h>
+ 
+#include <err.h>
+#include <errno.h>
+
 
 int num = 0;
 
@@ -1002,10 +1006,9 @@ aa:
  
 int mpro(){
  OP w,x;
- int b=-1,l=-1,k1=0,k2=0,status;
-FILE *f1,*f2;
-
-  int pid;
+ int b=-1,l=-1,k1=0,k2=0;
+ FILE *f1,*f2;
+ int pid;
  
   if((pid = fork())<0){
     perror("call fork()");
@@ -1063,11 +1066,37 @@ aa:
 
 }
 
+#define P_MAX  10             //プロセス数
+
+int mine(){
+	int pid[P_MAX];
+
+	/*
+	子プロセス生成。子プロセスは次の行から始まるため、
+	このような記述をすると、子プロセスが子プロセスを生成しないで済む。
+	*/
+	for(int i=0 ; i < P_MAX && (pid[i] = fork()) > 0 ; i++ )
+  {
+  if( pid[i] > 0){		//子プロセス
+		printf("child:%d %d\n",pid[i],i);
+		//exit(0);
+	}else{
+	    perror("child process") ;
+	    //exit(0);
+	}
+  }
+
+	return 0;
+}
+
 //言わずもがな
 int main(void)
 {
   time_t t;
- 
+
+  mine();
+  //exit(1);
+
   srand(clock() * time(&t));
   mpro();
   exit(1);
