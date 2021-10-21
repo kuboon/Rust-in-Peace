@@ -18,6 +18,10 @@
 //#include <assert.h>
 #include <execinfo.h>
 #include <omp.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include "8192.h"
 //#include "4096.h"
@@ -25,6 +29,12 @@
 #include "struct.h"
 #include "debug.c"
 #include "chash.c"
+
+#include <pthread.h>
+
+int num = 0;
+
+
 
 //nomal bases
 //unsigned short gf[M]={0,1,2,4,8,9,11,15,7,14,5,10,13,3,6,12};
@@ -108,7 +118,7 @@ OP v2o(vec a)
 }
 
 //停止コマンド
-void wait(void)
+void wait2(void)
 {
   printf(" (enter number and hit return) "); // 何か表示させたほうが良いだろう
   fflush(stdout);                            // just in case
@@ -610,12 +620,13 @@ v2a(oterm a)
   exit(1);
 }
 
-void printsage(vec a)
+void printsage(vec a,FILE *fp)
 {
   int i, j;
   oterm b;
 
-  printf("poly=");
+//  fp=fopen("dat","w");
+  fprintf(fp,"poly=");
   for (i = 0; i < DEG; i++)
   {
     if (a.x[i] > 0)
@@ -627,11 +638,11 @@ void printsage(vec a)
       //printf ("X**%d+", i); //for GF2
       if (i == K)
       {
-        printf("B('a^%d')*X**%d;", j, i); //for GF(2^m)
+        fprintf(fp,"B('a^%d')*X**%d;", j, i); //for GF(2^m)
       }
       else
       {
-        printf("B('a^%d')*X**%d+", j, i); //for GF(2^m)
+        fprintf(fp,"B('a^%d')*X**%d+", j, i); //for GF(2^m)
       }
     }
   }
@@ -713,7 +724,7 @@ ginit(unsigned short *g)
   int j, count = 0, k = 0;
   unsigned short gg[K + 1] = {0};
 
-  printf("in ginit\n");
+  //printf("in ginit\n");
 
   g[K] = 1;          //xor128();
   g[0] = rand() % 3; //or N
@@ -722,7 +733,7 @@ ginit(unsigned short *g)
   {
     while (count < k)
     {
-      printf("in whule\n");
+      //printf("in whule\n");
       j = rand() % (K);
       if (j < K && j > 0 && g[j] == 0)
       {
@@ -857,8 +868,8 @@ OP mkpol()
 
   } while (j == 0);
 
-  printpol(o2v(w));
-  printf(" ==g\n");
+  //printpol(o2v(w));
+  //printf(" ==g\n");
   //exit(1);
 
   return w;
@@ -935,10 +946,12 @@ void chu(void)
 {
   int i, j, l, ii = 0;
   OP w = {0};
-
+  FILE *fp;
   unsigned short ta[N] = {0};
 
   j = 0;
+  fp=fopen("dat.sage","w");
+
 aa:
 
   //printf("\n");
@@ -977,8 +990,8 @@ aa:
 
   printpol(o2v(w));
   printf(" =irreducible\n");
-  printsage(o2v(w));
-  printf(" print(poly.is_irreducible());\n");
+  printsage(o2v(w),fp);
+  fprintf(fp," print(poly.is_irreducible());\n");
   j++;
 
   if (j > 100)
@@ -986,12 +999,79 @@ aa:
   goto aa;
 }
 
+ 
+int mpro(){
+ OP w,x;
+ int b=-1,l=-1,k1=0,k2=0,status;
+FILE *f1,*f2;
+
+  int pid;
+ 
+  if((pid = fork())<0){
+    perror("call fork()");
+    exit(1);
+  }
+
+f1=fopen("dat1.sage","w");
+f2=fopen("dat2.sage","w");
+  //this is child process
+fprintf(f1,"B=GF(2^%d,'a')\n",E);
+fprintf(f1,"F.<X>=B[]\n");
+fprintf(f2,"B=GF(2^%d,'a')\n",E);
+fprintf(f2,"F.<X>=B[]\n");
+
+while(1){
+aa:
+  l=-1;
+  b=-1;
+ w=mkpol();
+ x=mkpol();
+
+  if(pid == 0){
+    l=ben_or(w);
+    if(l==0){
+      printsage(o2v(w),f1);
+      fprintf(f1," print(poly.is_irreducible());\n");
+      l=-1;
+      k1++;
+      if(k1>50){
+        fclose(f1);
+      exit(1);
+      }
+      goto aa;
+    } 
+ 
+  }//this is mother process
+  else{
+    b=ben_or(x);
+    if(b==0){
+      b=-1;
+      printsage(o2v(x),f2);
+      fprintf(f2," print(poly.is_irreducible());\n");
+      //printsage(o2v(x));
+      //printf(" print(poly.is_irreducible());\n");
+      k2++;
+      if(k2>50){
+        fclose(f2);
+      exit(1);
+      }
+      goto aa;
+    }
+  }
+
+  }
+
+}
+
 //言わずもがな
 int main(void)
 {
   time_t t;
-
+ 
   srand(clock() * time(&t));
+  mpro();
+  exit(1);
+
   chu();
 
   return 0;
