@@ -583,24 +583,47 @@ OP omod(OP f, OP g)
   return f;
 }
 
+
+OP tbl[16]={0};
+
+void table(OP x,OP mod){
+  int i;
+
+  tbl[0]=x;
+  for(i=0;i<E;i++){
+  tbl[i+1]=omod(omul(tbl[i],tbl[i]),mod);
+  //printpol(o2v(tbl[i+1]));
+  //printf(" =====tbl\n");
+  }
+  //exit(1);
+
+}
+
+OP opwm(OP f, OP mod, int n)
+{
+  int i;
+  OP o;
+
+  table(f,mod);
+
+return tbl[n];
+}
+
+
 //多項式のべき乗余
 OP opowmod(OP f, OP mod, int n)
 {
   int i;
+  OP o={0};
 
-  //printpol(o2v(mod));
-  //printf(" =mod %d\n",LT(mod).n);
+
   //繰り返し２乗法
-
   for (i = 1; i < n + 1; i++)
-  {
-    f = omul(f, f);
-    if ((deg(o2v(f)) > deg(o2v(mod))) && odeg(mod) > 0)
-      f = omod(f, mod);
-  }
+    f = omod(omul(f, f),mod);
 
   return f;
 }
+
 
 unsigned short
 v2a(oterm a)
@@ -879,6 +902,7 @@ OP mkpol()
   return w;
 }
 
+
 //GF(2^m) then set m in this function.
 int ben_or(OP f)
 {
@@ -888,7 +912,7 @@ int ben_or(OP f)
   //if GF(8192) is 2^m and m==13 or if GF(4096) and m==12 if GF(16384) is testing
   int m = E;
   // m=12 as a for GF(4096)=2^12 defined @ gloal.h or here,for example m=4 and GF(16)
-
+  
   v.x[1] = 1;
   s = v2o(v);
   r = s;
@@ -904,13 +928,14 @@ int ben_or(OP f)
 
   i = 0;
 
-
+  //table(r,f);
   //r(x)^{q^i} square pow mod
-  while (i < K / 2)
+  for (i=0;i < K / 2;i++)
   {
     // irreducible over GH(8192) 2^13
     r = opowmod(r, f, m);
-
+    //r=opwm(r,f,E);
+    //exit(1);
     // irreducible over GF2
     //r=omod(opow(r,2),f);
 
@@ -921,7 +946,7 @@ int ben_or(OP f)
     if (odeg(u) > 0)
       return -1;
 
-    i++;
+    //i++;
   }
 
   return 0;
@@ -998,38 +1023,162 @@ aa:
   fprintf(fp," print(poly.is_irreducible());\n");
   j++;
 
-  if (j > 100)
+  if (j > 10)
     exit(1);
   goto aa;
 }
 
- 
+ #define DAT 10
+
 int mpro(){
- OP w,x;
- int b=-1,l=-1,k1=0,k2=0;
- FILE *f1,*f2;
- int pid;
+ OP w,x,y,z,zz;
+ int b=-1,l=-1,k1=0,k2=0,k3=0,k4=0,k5=0,a=-1,c=-1,i=0,d=0;
+ FILE *f1,*f2,*f3,*f4,*f5;
+ int pid[5]={0};
  
+/*
   if((pid = fork())<0){
     perror("call fork()");
     exit(1);
   }
+*/
 
-f1=fopen("dat1.sage","w");
-f2=fopen("dat2.sage","w");
+//for(int i=0 ; i < 1 && (pid[i] = fork()) > 0 ; i++ )
+for(i=0;i<3 && (pid[i]=fork())>0;i++)
+printf("%d\n",pid[i]);
+//exit(1);
+f1=fopen("dat.sage","w");
+f2=fopen("dat0.sage","w");
+f3=fopen("dat1.sage","w");
+f4=fopen("dat2.sage","w");
+//f5=fopen("dat3.sage","w");
   //this is child process
 fprintf(f1,"B=GF(2^%d,'a')\n",E);
 fprintf(f1,"F.<X>=B[]\n");
 fprintf(f2,"B=GF(2^%d,'a')\n",E);
 fprintf(f2,"F.<X>=B[]\n");
+fprintf(f3,"B=GF(2^%d,'a')\n",E);
+fprintf(f3,"F.<X>=B[]\n");
+fprintf(f4,"B=GF(2^%d,'a')\n",E);
+fprintf(f4,"F.<X>=B[]\n");
+//fprintf(f5,"B=GF(2^%d,'a')\n",E);
+//fprintf(f5,"F.<X>=B[]\n");
 
+i=0;
 while(1){
-aa:
-  l=-1;
-  b=-1;
- w=mkpol();
- x=mkpol();
+//printf("@\n");
+//aa:
 
+  l=-1;
+  w=mkpol();
+  b=-1;
+  x=mkpol();
+  a=-1;
+  y=mkpol();
+  c=-1;
+  z=mkpol();
+  //d=-1;
+  //zz=mkpol();
+/*
+  if(pid[3] > 0){
+    d=ben_or(w);
+    if(d==0 && k5<DAT){
+      printsage(o2v(zz),f5);
+      fprintf(f5," print(poly.is_irreducible());\n");
+      d=-1;
+      k5++;
+      printf("k5=%d\n",k5);
+      if(k5==DAT){
+        fclose(f5);
+      wait(&pid[0]);
+      wait(&pid[1]);
+      wait(&pid[2]);
+      wait(&pid[3]);
+        exit(1);
+      }
+      //goto aa;
+    }
+  }else
+  */ 
+  if(pid[2] > 0){
+    l=ben_or(w);
+    if(l==0 && k1<DAT){
+      printsage(o2v(w),f1);
+      fprintf(f1," print(poly.is_irreducible());\n");
+      l=-1;
+      k1++;
+      printf("k1=%d\n",k1);
+      if(k1==DAT){
+        fclose(f1);
+      wait(&pid[0]);
+      wait(&pid[1]);
+      wait(&pid[2]);
+        exit(1);
+      }
+      //goto aa;
+    }
+  } else if (pid[1] > 0){
+ // }//this is mother process
+
+    b=ben_or(x);
+    if(b==0 && k2<DAT){
+      printsage(o2v(x),f2);
+      fprintf(f2," print(poly.is_irreducible());\n");
+      b=-1;
+      k2++;
+      printf("k2=%d\n",k2);
+
+      if(k2==DAT){
+        fclose(f2);
+          _exit(0);
+    //wait(&pid[1]);
+      }
+    //goto aa;
+    }
+  }
+  //}//this is mother process
+
+else 
+if(pid[0] > 0){
+
+  //if(pid[1] == 0){
+    a=ben_or(y);
+    if(a==0 && k3 < DAT){
+      printsage(o2v(y),f3);
+      fprintf(f3," print(poly.is_irreducible());\n");
+      a=-1;
+      k3++;
+      printf("k3=%d\n",k3);
+
+      if(k3==DAT){
+        fclose(f3);
+          _exit(0);
+      //wait(&pid[0]);
+      }
+    //goto aa;
+    }  
+    }else if(pid[0]==0){
+  //this is mother process
+
+    c=ben_or(z);
+    if(c==0 && k4 < DAT){
+      printsage(o2v(z),f4);
+      fprintf(f4," print(poly.is_irreducible());\n");
+      c=-1;
+      k4++;
+      printf("k4=%d\n",k4);
+      if(k4==DAT){
+        fclose(f4);
+        _exit(0);
+      }
+      //goto aa;
+    } 
+    }
+    //exit(1);
+  //wait(&pid[i]);
+ /*
+  //this is mother process
+  
   if(pid == 0){
     l=ben_or(w);
     if(l==0){
@@ -1061,9 +1210,11 @@ aa:
       goto aa;
     }
   }
+  */
 
   }
 
+return 0;
 }
 
 #define P_MAX  10             //プロセス数
@@ -1093,15 +1244,19 @@ int mine(){
 int main(void)
 {
   time_t t;
+  vec v={0};
+  OP p={0};
 
-  mine();
+  v.x[1]=1;
+  p=v2o(v);
+  //mine();
   //exit(1);
-
+  
   srand(clock() * time(&t));
   mpro();
   exit(1);
 
-  chu();
+  //chu();
 
   return 0;
 }
