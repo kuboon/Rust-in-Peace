@@ -31,14 +31,12 @@
 #include "chash.c"
 
 #include <pthread.h>
- 
+
 #include <err.h>
 #include <errno.h>
 
-
+#define DAT 5
 int num = 0;
-
-
 
 //nomal bases
 //unsigned short gf[M]={0,1,2,4,8,9,11,15,7,14,5,10,13,3,6,12};
@@ -583,20 +581,20 @@ OP omod(OP f, OP g)
   return f;
 }
 
+OP tbl[K/2+1] = {0};
 
-OP tbl[16]={0};
+void table(OP x, OP mod)
+{
+  int i,j;
 
-void table(OP x,OP mod){
-  int i;
-
-  tbl[0]=x;
-  for(i=0;i<E;i++){
-  tbl[i+1]=omod(omul(tbl[i],tbl[i]),mod);
-  //printpol(o2v(tbl[i+1]));
-  //printf(" =====tbl\n");
+  tbl[0] = x;
+  for (i = 0; i < K/2; i++)
+  {
+    tbl[i + 1] = omod(omul(tbl[i], tbl[i]), mod);
+    //printpol(o2v(tbl[i+1]));
+    //printf(" =====tbl\n");
   }
   //exit(1);
-
 }
 
 OP opwm(OP f, OP mod, int n)
@@ -604,26 +602,24 @@ OP opwm(OP f, OP mod, int n)
   int i;
   OP o;
 
-  table(f,mod);
+  table(f, mod);
 
-return tbl[n];
+  return tbl[n];
 }
-
 
 //多項式のべき乗余
 OP opowmod(OP f, OP mod, int n)
 {
   int i;
-  OP o={0};
-
+  OP t[K / 2] = {0};
+  t[0] = f;
 
   //繰り返し２乗法
   for (i = 1; i < n + 1; i++)
-    f = omod(omul(f, f),mod);
+    t[0] = omod(omul(t[0], t[0]), mod);
 
-  return f;
+  return t[0];
 }
-
 
 unsigned short
 v2a(oterm a)
@@ -647,13 +643,13 @@ v2a(oterm a)
   exit(1);
 }
 
-void printsage(vec a,FILE *fp)
+void printsage(vec a, FILE *fp)
 {
   int i, j;
   oterm b;
 
-//  fp=fopen("dat","w");
-  fprintf(fp,"poly=");
+  //  fp=fopen("dat","w");
+  fprintf(fp, "poly=");
   for (i = 0; i < DEG; i++)
   {
     if (a.x[i] > 0)
@@ -665,11 +661,11 @@ void printsage(vec a,FILE *fp)
       //printf ("X**%d+", i); //for GF2
       if (i == K)
       {
-        fprintf(fp,"B('a^%d')*X**%d;", j, i); //for GF(2^m)
+        fprintf(fp, "B('a^%d')*X**%d;", j, i); //for GF(2^m)
       }
       else
       {
-        fprintf(fp,"B('a^%d')*X**%d+", j, i); //for GF(2^m)
+        fprintf(fp, "B('a^%d')*X**%d+", j, i); //for GF(2^m)
       }
     }
   }
@@ -754,7 +750,7 @@ ginit(unsigned short *g)
   //printf("in ginit\n");
 
   g[K] = 1;          //xor128();
-  g[0] = rand() % 3; //or N
+  g[0] = rand() % 2; //or N
   k = rand() % (K - 1);
   if (k > 0)
   {
@@ -764,7 +760,7 @@ ginit(unsigned short *g)
       j = rand() % (K);
       if (j < K && j > 0 && g[j] == 0)
       {
-        g[j] = rand() % 3; //or N;
+        g[j] = rand() % 2; //or N;
         count++;
       }
     }
@@ -902,20 +898,21 @@ OP mkpol()
   return w;
 }
 
-
 //GF(2^m) then set m in this function.
 int ben_or(OP f)
 {
-  int i, n;
-  OP s = {0}, u = {0}, r = {0};
+  int i, n, pid;
+  OP s = {0}, u[K / 2] = {0}, r[K / 2] = {0};
   vec v = {0};
   //if GF(8192) is 2^m and m==13 or if GF(4096) and m==12 if GF(16384) is testing
   int m = E;
   // m=12 as a for GF(4096)=2^12 defined @ gloal.h or here,for example m=4 and GF(16)
-  
+  int flg[K/2] = {0};
+
   v.x[1] = 1;
   s = v2o(v);
-  r = s;
+  //for (i = 0; i < K / 2; i++)
+    r[0] = s;
   n = deg(o2v(f));
 
   if (LT(f).n == 0 && LT(f).a == 1)
@@ -927,26 +924,19 @@ int ben_or(OP f)
     return -1;
 
   i = 0;
-
-  //table(r,f);
+  
   //r(x)^{q^i} square pow mod
-  for (i=0;i < K / 2;i++)
+  for (i = 0; i < K / 2; i++)
   {
-    // irreducible over GH(8192) 2^13
-    r = opowmod(r, f, m);
-    //r=opwm(r,f,E);
-    //exit(1);
-    // irreducible over GF2
-    //r=omod(opow(r,2),f);
+   // irreducible over GH(8192) 2^13
+    r[0] = opowmod(r[0], f, E);
+    u[0] = oadd(r[0], s);
+    u[0] = gcd(f, u[0]);
 
-    u = oadd(r, s);
-    //if (deg(o2v(u)) > 0)
-    u = gcd(f, u);
-
-    if (odeg(u) > 0)
+    if (odeg(u[0]) > 0){
+    //flg[i]= -1;
       return -1;
-
-    //i++;
+    }
   }
 
   return 0;
@@ -979,7 +969,7 @@ void chu(void)
   unsigned short ta[N] = {0};
 
   j = 0;
-  fp=fopen("dat.sage","w");
+  fp = fopen("dat.sage", "w");
 
 aa:
 
@@ -1019,67 +1009,70 @@ aa:
 
   printpol(o2v(w));
   printf(" =irreducible\n");
-  printsage(o2v(w),fp);
-  fprintf(fp," print(poly.is_irreducible());\n");
+  printsage(o2v(w), fp);
+  fprintf(fp, " print(poly.is_irreducible());\n");
   j++;
 
-  if (j > 10)
+  if (j > 10){
+    fclose(fp);
     exit(1);
+  }
   goto aa;
 }
 
- #define DAT 10
 
-int mpro(){
- OP w,x,y,z,zz;
- int b=-1,l=-1,k1=0,k2=0,k3=0,k4=0,k5=0,a=-1,c=-1,i=0,d=0;
- FILE *f1,*f2,*f3,*f4,*f5;
- int pid[5]={0};
- 
-/*
+int mpro()
+{
+  OP w, x, y, z, zz;
+  int b = -1, l = -1, k1 = 0, k2 = 0, k3 = 0, k4 = 0, k5 = 0, a = -1, c = -1, i = 0, d = 0;
+  FILE *f1, *f2, *f3, *f4, *f5;
+  int pid[5] = {0};
+
+  /*
   if((pid = fork())<0){
     perror("call fork()");
     exit(1);
   }
 */
 
-//for(int i=0 ; i < 1 && (pid[i] = fork()) > 0 ; i++ )
-for(i=0;i<3 && (pid[i]=fork())>0;i++)
-printf("%d\n",pid[i]);
-//exit(1);
-f1=fopen("dat.sage","w");
-f2=fopen("dat0.sage","w");
-f3=fopen("dat1.sage","w");
-f4=fopen("dat2.sage","w");
-//f5=fopen("dat3.sage","w");
+  //for(int i=0 ; i < 1 && (pid[i] = fork()) > 0 ; i++ )
+  for (i = 0; i < 3 && (pid[i] = fork()) > 0; i++)
+    printf("%d\n", pid[i]);
+  //exit(1);
+  f1 = fopen("dat.sage", "w");
+  f2 = fopen("dat0.sage", "w");
+  f3 = fopen("dat1.sage", "w");
+  f4 = fopen("dat2.sage", "w");
+  //f5=fopen("dat3.sage","w");
   //this is child process
-fprintf(f1,"B=GF(2^%d,'a')\n",E);
-fprintf(f1,"F.<X>=B[]\n");
-fprintf(f2,"B=GF(2^%d,'a')\n",E);
-fprintf(f2,"F.<X>=B[]\n");
-fprintf(f3,"B=GF(2^%d,'a')\n",E);
-fprintf(f3,"F.<X>=B[]\n");
-fprintf(f4,"B=GF(2^%d,'a')\n",E);
-fprintf(f4,"F.<X>=B[]\n");
-//fprintf(f5,"B=GF(2^%d,'a')\n",E);
-//fprintf(f5,"F.<X>=B[]\n");
+  fprintf(f1, "B=GF(2^%d,'a')\n", E);
+  fprintf(f1, "F.<X>=B[]\n");
+  fprintf(f2, "B=GF(2^%d,'a')\n", E);
+  fprintf(f2, "F.<X>=B[]\n");
+  fprintf(f3, "B=GF(2^%d,'a')\n", E);
+  fprintf(f3, "F.<X>=B[]\n");
+  fprintf(f4, "B=GF(2^%d,'a')\n", E);
+  fprintf(f4, "F.<X>=B[]\n");
+  //fprintf(f5,"B=GF(2^%d,'a')\n",E);
+  //fprintf(f5,"F.<X>=B[]\n");
 
-i=0;
-while(1){
-//printf("@\n");
-//aa:
+  i = 0;
+  while (1)
+  {
+    //printf("@\n");
+    //aa:
 
-  l=-1;
-  w=mkpol();
-  b=-1;
-  x=mkpol();
-  a=-1;
-  y=mkpol();
-  c=-1;
-  z=mkpol();
-  //d=-1;
-  //zz=mkpol();
-/*
+    l = -1;
+    w = mkpol();
+    b = -1;
+    x = mkpol();
+    a = -1;
+    y = mkpol();
+    c = -1;
+    z = mkpol();
+    //d=-1;
+    //zz=mkpol();
+    /*
   if(pid[3] > 0){
     d=ben_or(w);
     if(d==0 && k5<DAT){
@@ -1099,84 +1092,97 @@ while(1){
       //goto aa;
     }
   }else
-  */ 
-  if(pid[2] > 0){
-    l=ben_or(w);
-    if(l==0 && k1<DAT){
-      printsage(o2v(w),f1);
-      fprintf(f1," print(poly.is_irreducible());\n");
-      l=-1;
-      k1++;
-      printf("k1=%d\n",k1);
-      if(k1==DAT){
-        fclose(f1);
-      wait(&pid[0]);
-      wait(&pid[1]);
-      wait(&pid[2]);
-        exit(1);
+  */
+    if (pid[2] > 0)
+    {
+      l = ben_or(w);
+      if (l == 0 && k1 < DAT)
+      {
+        printsage(o2v(w), f1);
+        fprintf(f1, " print(poly.is_irreducible());\n");
+        l = -1;
+        k1++;
+        printf("k1=%d\n", k1);
+        if (k1 == DAT)
+        {
+          fclose(f1);
+          wait(&pid[0]);
+          wait(&pid[1]);
+          wait(&pid[2]);
+          exit(1);
+        }
+        //goto aa;
       }
-      //goto aa;
     }
-  } else if (pid[1] > 0){
- // }//this is mother process
+    else if (pid[1] > 0)
+    {
+      // }//this is mother process
 
-    b=ben_or(x);
-    if(b==0 && k2<DAT){
-      printsage(o2v(x),f2);
-      fprintf(f2," print(poly.is_irreducible());\n");
-      b=-1;
-      k2++;
-      printf("k2=%d\n",k2);
+      b = ben_or(x);
+      if (b == 0 && k2 < DAT)
+      {
+        printsage(o2v(x), f2);
+        fprintf(f2, " print(poly.is_irreducible());\n");
+        b = -1;
+        k2++;
+        printf("k2=%d\n", k2);
 
-      if(k2==DAT){
-        fclose(f2);
+        if (k2 == DAT)
+        {
+          fclose(f2);
           _exit(0);
-    //wait(&pid[1]);
+          //wait(&pid[1]);
+        }
+        //goto aa;
       }
-    //goto aa;
     }
-  }
-  //}//this is mother process
+    //}//this is mother process
 
-else 
-if(pid[0] > 0){
+    else if (pid[0] > 0)
+    {
 
-  //if(pid[1] == 0){
-    a=ben_or(y);
-    if(a==0 && k3 < DAT){
-      printsage(o2v(y),f3);
-      fprintf(f3," print(poly.is_irreducible());\n");
-      a=-1;
-      k3++;
-      printf("k3=%d\n",k3);
+      //if(pid[1] == 0){
+      a = ben_or(y);
+      if (a == 0 && k3 < DAT)
+      {
+        printsage(o2v(y), f3);
+        fprintf(f3, " print(poly.is_irreducible());\n");
+        a = -1;
+        k3++;
+        printf("k3=%d\n", k3);
 
-      if(k3==DAT){
-        fclose(f3);
+        if (k3 == DAT)
+        {
+          fclose(f3);
           _exit(0);
-      //wait(&pid[0]);
+          //wait(&pid[0]);
+        }
+        //goto aa;
       }
-    //goto aa;
-    }  
-    }else if(pid[0]==0){
-  //this is mother process
+    }
+    else if (pid[0] == 0)
+    {
+      //this is mother process
 
-    c=ben_or(z);
-    if(c==0 && k4 < DAT){
-      printsage(o2v(z),f4);
-      fprintf(f4," print(poly.is_irreducible());\n");
-      c=-1;
-      k4++;
-      printf("k4=%d\n",k4);
-      if(k4==DAT){
-        fclose(f4);
-        _exit(0);
+      c = ben_or(z);
+      if (c == 0 && k4 < DAT)
+      {
+        printsage(o2v(z), f4);
+        fprintf(f4, " print(poly.is_irreducible());\n");
+        c = -1;
+        k4++;
+        printf("k4=%d\n", k4);
+        if (k4 == DAT)
+        {
+          fclose(f4);
+          _exit(0);
+        }
+        //goto aa;
       }
-      //goto aa;
-    } 
     }
     //exit(1);
-  //wait(&pid[i]);
- /*
+    //wait(&pid[i]);
+    /*
   //this is mother process
   
   if(pid == 0){
@@ -1211,47 +1217,50 @@ if(pid[0] > 0){
     }
   }
   */
-
   }
 
-return 0;
+  return 0;
 }
 
-#define P_MAX  10             //プロセス数
+#define P_MAX 10 //プロセス数
 
-int mine(){
-	int pid[P_MAX];
+int mine()
+{
+  int pid[P_MAX];
 
-	/*
+  /*
 	子プロセス生成。子プロセスは次の行から始まるため、
 	このような記述をすると、子プロセスが子プロセスを生成しないで済む。
 	*/
-	for(int i=0 ; i < P_MAX && (pid[i] = fork()) > 0 ; i++ )
+  for (int i = 0; i < P_MAX && (pid[i] = fork()) > 0; i++)
   {
-  if( pid[i] > 0){		//子プロセス
-		printf("child:%d %d\n",pid[i],i);
-		//exit(0);
-	}else{
-	    perror("child process") ;
-	    //exit(0);
-	}
+    if (pid[i] > 0)
+    { //子プロセス
+      printf("child:%d %d\n", pid[i], i);
+      //exit(0);
+    }
+    else
+    {
+      perror("child process");
+      //exit(0);
+    }
   }
 
-	return 0;
+  return 0;
 }
 
 //言わずもがな
 int main(void)
 {
   time_t t;
-  vec v={0};
-  OP p={0};
+  vec v = {0};
+  OP p = {0};
 
-  v.x[1]=1;
-  p=v2o(v);
+  v.x[1] = 1;
+  p = v2o(v);
   //mine();
   //exit(1);
-  
+
   srand(clock() * time(&t));
   mpro();
   exit(1);
