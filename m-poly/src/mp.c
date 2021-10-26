@@ -8,7 +8,7 @@
 
 //#include "gf256.h"
 
-#define V 3 //変数の数
+#define V 3     //変数の数
 #define P 10000 //最大次数
 #define Q 4     //基礎体
 #define N Q *Q  //定義体
@@ -19,14 +19,12 @@
 #define F (J - K + 1) * (J - K + 2) / 2 //シンドローム行列の縦ベクトル
 #define U 26
 #define E 5
-#define DEG 10+1
-
+#define DEG 10 + 1
 
 unsigned char gf[16] =
     {0, 1, 2, 4, 8, 9, 11, 15, 7, 14, 5, 10, 13, 3, 6, 12};
 unsigned char fg[16] =
     {0, 1, 2, 13, 3, 10, 14, 8, 4, 5, 11, 6, 15, 12, 9, 7};
-
 
 typedef struct
 {
@@ -47,90 +45,100 @@ typedef struct
 typedef struct
 {
 
-  unsigned char z[V][150000];
+  unsigned char z[V][15000]; //零点の数
 
 } PO;
 
-
-typedef struct {
-  unsigned short m[DEG*DEG][DEG*DEG];
+typedef struct
+{
+  unsigned short m[DEG * DEG][DEG * DEG]; // 多項式の二次元配列型
 } mvx;
 
+MP v2m(mvx x) //配列型から多項式型への変換
+{
+  int i, j, count = 0;
+  MP o = {0};
 
-MP v2m(mvx x){
-int i,j,count=0;
-MP o={0};
-
-for(i=0;i<DEG;i++){
-  for(j=0;j<DEG;j++){
-  if(x.m[i][j]>0){
-    o.x[count].n[0]=i;
-    o.x[count].n[1]=j;
-    o.x[count].a=x.m[i][j];
-    count++;
+  for (i = 0; i < DEG*DEG; i++)
+  {
+    for (j = 0; j < DEG*DEG; j++)
+    {
+      if (x.m[i][j] > 0)
+      {
+        o.x[count].n[0] = i;
+        o.x[count].n[1] = j;
+        o.x[count].a = x.m[i][j];
+        count++;
+      }
+    }
   }
+  o.t = count;
+
+  return o;
+}
+
+mvx m2v(MP x) //多項式から配列型への変換
+{
+  mvx z = {0};
+  int i, j;
+
+  for (i = 0; i < x.t; i++)
+  {
+    if (x.x[i].a > 0)
+      z.m[x.x[i].n[0]][x.x[i].n[1]] = x.x[i].a;
+  }
+
+  return z;
+}
+
+void msm(mvx *x)
+{
+  int i, j;
+
+  for (i = 0; i < DEG; i++)
+  {
+    for (j = 0; j < DEG; j++)
+      x->m[i][j] = rand() % 2;
   }
 }
-o.t=count;
 
-return o;
+mvx madd(mvx a, mvx b)
+{
+  int i, j;
+
+  for (i = 0; i < DEG; i++)
+  {
+    for (j = 0; j < DEG; j++)
+      a.m[i][j] ^= b.m[i][j];
+  }
+
+  return a;
 }
 
-mvx m2v(MP x){
-  mvx z={0};
-  int i,j;
-
-for(i=0;i<x.t;i++){
-  if(x.x[i].a>0)
-  z.m[x.x[i].n[0]][x.x[i].n[1]]=x.x[i].a;
-}
-
-return z;
-}
-
-void msm(mvx *x){
-int i,j;
-
-for(i=0;i<DEG;i++){
-  for(j=0;j<DEG;j++)
-  x->m[i][j]=rand()%2;
-}
-
-}
-
-mvx madd(mvx a,mvx b){
-int i,j;
-
-for(i=0;i<DEG;i++){
-  for(j=0;j<DEG;j++)
-  a.m[i][j]^=b.m[i][j];
-}
-
-return a;
-}
-
-void printv(MP x){
+void printv(MP x)
+{
   int i;
 
-  for(i=0;i<x.t;i++){
-    if(x.x[i].a>0)
-  printf("%d*x^%d*y^%d+",x.x[i].a,x.x[i].n[0],x.x[i].n[1]);
+  for (i = 0; i < x.t; i++)
+  {
+    if (x.x[i].a > 0)
+      printf("%d*x^%d*y^%d+", x.x[i].a, x.x[i].n[0], x.x[i].n[1]);
   }
 }
 
+void printm(mvx m)
+{
+  int i, j;
 
-void printm(mvx m){
-  int i,j;
-
-  for(i=0;i<DEG;i++){
-    for(j=0;j<DEG;j++)
-    if(m.m[i][j]>0)
-    printf("%d*x^%d*y^%d+",m.m[i][j],i,j);
+  for (i = 0; i < DEG*DEG; i++)
+  {
+    for (j = 0; j < DEG*DEG; j++)
+      if (m.m[i][j] > 0)
+        printf("%d*x^%d*y^%d+", m.m[i][j], i, j);
   }
 
-printf(" ordering by lex\n");
+  printf(" ordering by lex\n");
 }
-
 
 //unsigned short gf[8]={0,1,2,4,3,6,7,5};
 //unsigned short fg[8]={0,1,2,4,3,7,5,6};
@@ -152,7 +160,7 @@ unsigned char fg[32]={0,1,2,20,3,8,21,24,4,12,9,29,22,18,25,27,5,15,13,14,10,16,
 //unsigned short gf[128]={0,1,2,4,8,16,32,64,65,67,71,79,95,127,63,126,61,122,53,106,21,42,84,105,19,38,76,89,115,39,78,93,123,55,110,29,58,116,41,82,101,11,22,44,88,113,35,70,77,91,119,47,94,125,59,118,45,90,117,43,86,109,27,54,108,25,50,100,9,18,36,72,81,99,7,14,28,56,112,33,66,69,75,87,111,31,62,124,57,114,37,74,85,107,23,46,92,121,51,102,13,26,52,104,17,34,68,73,83,103,15,30,60,120,49,98,5,10,20,40,80,97,3,6,12,24,48,96};
 //unsigned short fg[128]={0,1,2,122,3,116,123,74,4,68,117,41,124,100,75,110,5,104,69,24,118,20,42,94,125,65,101,62,76,35,111,85,6,79,105,46,70,90,25,29,119,38,21,59,43,56,95,51,126,114,66,98,102,18,63,33,77,88,36,54,112,16,86,14,7,8,80,9,106,81,47,10,71,107,91,82,26,48,30,11,120,72,39,108,22,92,60,83,44,27,57,49,96,31,52,12,127,121,115,73,67,40,99,109,103,23,19,93,64,61,34,84,78,45,89,28,37,58,55,50,113,97,17,32,87,53,15,13};
 
-unsigned short S[10000][10000] = {0};
+unsigned short S[1000][1000] = {0};
 
 unsigned int cnt = 0;
 PO p;
@@ -189,25 +197,28 @@ int mltn(int n, int x)
   }
 }
 
+mvx mmul(mvx x, mvx y)
+{
+  int i, j, k, l;
+  mvx c = {0};
 
-mvx mmul(mvx x,mvx y){
-int i,j,k,l;
-mvx c={0};
-
-for(l=0;l<DEG;l++){
-for(i=0;i<DEG;i++){
-  for(j=0;j<DEG;j++){
-    for(k=0;k<DEG;k++){
-      if(x.m[j][k]>0 && y.m[i][l]>0)
-  c.m[i+j][k+l]^=gf[mlt(fg[x.m[j][k]],fg[y.m[i][l]])];
+  for (l = 0; l < DEG; l++)
+  {
+    for (i = 0; i < DEG; i++)
+    {
+      for (j = 0; j < DEG; j++)
+      {
+        for (k = 0; k < DEG; k++)
+        {
+          if (x.m[j][k] > 0 && y.m[i][l] > 0)
+            c.m[i + j][k + l] ^= gf[mlt(fg[x.m[j][k]], fg[y.m[i][l]])];
+        }
+      }
     }
   }
-}
-}
 
-return c;
+  return c;
 }
-
 
 unsigned short
 oinv(unsigned short a)
@@ -955,31 +966,30 @@ int main(void)
 
   srand(clock() + time(&pp));
 
-mvx mt={0};
-mvx xc={0};
-mvx cx={0};
-MP za={0};
-mvx tm={0};
+  mvx mt = {0};
+  mvx xc = {0};
+  mvx cx = {0};
+  MP za = {0};
+  mvx tm = {0};
 
-msm(&mt);
-printm(mt);
-printf("\n");
-msm(&xc);
-printm(xc);
-printf("\n");
-cx=mmul(xc,mt);
-printm(cx);
-printf("\n");
+  msm(&mt);
+  printm(mt);
+  printf("\n");
+  msm(&xc);
+  printm(xc);
+  printf("\n");
+  cx = mmul(xc, mt);
+  printm(cx);
+  printf("\n");
 
-za=v2m(mt);
-printv(za);
-printf("\n");
+  za = v2m(cx);
+  printv(za);
+  printf("\n");
 
-tm=m2v(za);
-printm(tm);
-printf("\n");
-exit(1);
-
+  tm = m2v(za);
+  printm(tm);
+  printf("\n");
+  exit(1);
 
   i = 0;
   while (i < E)
