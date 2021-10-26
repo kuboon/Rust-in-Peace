@@ -40,6 +40,7 @@ typedef struct
 {
 
   mterm x[P];
+  int t;
 
 } MP;
 
@@ -56,12 +57,43 @@ typedef struct {
 } mvx;
 
 
+MP v2m(mvx x){
+int i,j,count=0;
+MP o={0};
+
+for(i=0;i<DEG;i++){
+  for(j=0;j<DEG;j++){
+  if(x.m[i][j]>0){
+    o.x[count].n[0]=i;
+    o.x[count].n[1]=j;
+    o.x[count].a=x.m[i][j];
+    count++;
+  }
+  }
+}
+o.t=count;
+
+return o;
+}
+
+mvx m2v(MP x){
+  mvx z={0};
+  int i,j;
+
+for(i=0;i<x.t;i++){
+  if(x.x[i].a>0)
+  z.m[x.x[i].n[0]][x.x[i].n[1]]=x.x[i].a;
+}
+
+return z;
+}
+
 void msm(mvx *x){
 int i,j;
 
 for(i=0;i<DEG;i++){
   for(j=0;j<DEG;j++)
-  x->m[i][j]=rand()%N;
+  x->m[i][j]=rand()%2;
 }
 
 }
@@ -77,30 +109,21 @@ for(i=0;i<DEG;i++){
 return a;
 }
 
+void printv(MP x){
+  int i;
 
-mvx mmul(mvx x,mvx y){
-int i,j,k,l;
-mvx c={0};
-
-for(l=0;l<DEG;l++){
-for(i=0;i<DEG;i++){
-  for(j=0;j<DEG;j++){
-    for(k=0;k<DEG;k++){
-      if(x.m[j][k]>0 && y.m[i][l]>0)
-  c.m[i+j][k+l]^=gf[mlt(fg[x.m[j][k]],fg[y.m[i][l]])];
-    }
+  for(i=0;i<x.t;i++){
+    if(x.x[i].a>0)
+  printf("%d*x^%d*y^%d+",x.x[i].a,x.x[i].n[0],x.x[i].n[1]);
   }
 }
-}
 
-return c;
-}
 
 void printm(mvx m){
   int i,j;
 
-  for(i=0;i<DEG*DEG;i++){
-    for(j=0;j<DEG*DEG;j++)
+  for(i=0;i<DEG;i++){
+    for(j=0;j<DEG;j++)
     if(m.m[i][j]>0)
     printf("%d*x^%d*y^%d+",m.m[i][j],i,j);
   }
@@ -166,6 +189,26 @@ int mltn(int n, int x)
   }
 }
 
+
+mvx mmul(mvx x,mvx y){
+int i,j,k,l;
+mvx c={0};
+
+for(l=0;l<DEG;l++){
+for(i=0;i<DEG;i++){
+  for(j=0;j<DEG;j++){
+    for(k=0;k<DEG;k++){
+      if(x.m[j][k]>0 && y.m[i][l]>0)
+  c.m[i+j][k+l]^=gf[mlt(fg[x.m[j][k]],fg[y.m[i][l]])];
+    }
+  }
+}
+}
+
+return c;
+}
+
+
 unsigned short
 oinv(unsigned short a)
 {
@@ -176,6 +219,8 @@ oinv(unsigned short a)
     if (gf[mlt(fg[a], i)] == 1)
       return (unsigned short)i;
   }
+
+  return -1;
 }
 
 int inv2(int a, int b)
@@ -187,6 +232,8 @@ int inv2(int a, int b)
     if (b == gf[mlt(fg[a], i)])
       return i;
   }
+
+  return -1;
 }
 
 void param(int n, int g)
@@ -202,7 +249,7 @@ void param(int n, int g)
   printf("n=%d ", n);
   printf("k=%d\n", U);
   printf("d=%d\n", U - g + 1);
-  printf("t=%d~%d\n", (U - g) / 2);
+  printf("t=%d\n", (U - g) / 2);
 
   delta = 1;
   ips = 0;
@@ -405,11 +452,9 @@ MP mdivLT(MP f, mterm m)
         }
       }
     }
-    else
-    {
-      return f;
-    }
   }
+
+  return f;
 }
 
 MP mdel(MP f, mterm m)
@@ -913,6 +958,8 @@ int main(void)
 mvx mt={0};
 mvx xc={0};
 mvx cx={0};
+MP za={0};
+mvx tm={0};
 
 msm(&mt);
 printm(mt);
@@ -924,7 +971,15 @@ cx=mmul(xc,mt);
 printm(cx);
 printf("\n");
 
+za=v2m(mt);
+printv(za);
+printf("\n");
+
+tm=m2v(za);
+printm(tm);
+printf("\n");
 exit(1);
+
 
   i = 0;
   while (i < E)
