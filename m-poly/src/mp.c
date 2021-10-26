@@ -19,7 +19,7 @@
 #define F (J - K + 1) * (J - K + 2) / 2 //シンドローム行列の縦ベクトル
 #define U 26
 #define E 5
-#define DEG 20
+#define DEG 10
 
 
 unsigned char gf[16] =
@@ -52,15 +52,15 @@ typedef struct
 
 
 typedef struct {
-  unsigned short m[DEG][DEG];
+  unsigned short m[DEG*DEG][DEG*DEG];
 } mvx;
 
 
 void msm(mvx *x){
 int i,j;
 
-for(i=0;i<2;i++){
-  for(j=0;j<2;j++)
+for(i=0;i<DEG;i++){
+  for(j=0;j<DEG;j++)
   x->m[i][j]=rand()%2;
 }
 
@@ -82,10 +82,10 @@ mvx mmul(mvx x,mvx y){
 int i,j,k,l;
 mvx c={0};
 
-for(l=0;l<4;l++){
-for(i=0;i<4;i++){
-  for(j=0;j<4;j++){
-    for(k=0;k<4;k++){
+for(l=0;l<DEG;l++){
+for(i=0;i<DEG;i++){
+  for(j=0;j<DEG;j++){
+    for(k=0;k<DEG;k++){
       if(x.m[j][k]>0 && y.m[i][l]>0)
   c.m[i+j][k+l]^=gf[mlt(fg[x.m[j][k]],fg[y.m[i][l]])];
     }
@@ -99,12 +99,13 @@ return c;
 void printm(mvx m){
   int i,j;
 
-  for(i=0;i<16;i++){
-    for(j=0;j<16;j++)
+  for(i=0;i<DEG*DEG;i++){
+    for(j=0;j<DEG*DEG;j++)
     if(m.m[i][j]>0)
     printf("%d*x^%d*y^%d+",m.m[i][j],i,j);
   }
 
+printf(" ordering by lex\n");
 }
 
 
