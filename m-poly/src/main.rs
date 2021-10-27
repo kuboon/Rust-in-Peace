@@ -24,7 +24,7 @@ struct MP{
 #[derive(Copy, Clone)]
 struct MVX
 {
-   m: [[i16;1000];1000]
+   m: [[i16;100];100]
 }
 
 
@@ -33,9 +33,9 @@ fn v2m(x:MVX) -> MP//配列型から多項式型への変換
   let mut count:i32;
   let mut o:MP=unsafe { MaybeUninit::uninit().assume_init() };
   count=0;
-  for it in 0..100
+  for it in 0..20
   {
-    for be in 0..100
+    for be in 0..20
     {
       if x.m[it][be] > 0
       {
@@ -109,9 +109,9 @@ fn printv(x:MP)
 fn printm(m:MVX)
 {
 
-  for i in 0..100
+  for i in 0..20
   {
-    for j in 0..100
+    for j in 0..20
     {
       if m.m[i][j] > 0
       {
