@@ -984,7 +984,7 @@ int main(void)
 
   za = v2m(cx);
   printv(za);
-  printf("\n");
+  printf(" t=%d\n",za.t);
 
   tm = m2v(za);
   printm(tm);

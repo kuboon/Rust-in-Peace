@@ -10,12 +10,12 @@
 #define V 3			//変数の数
 #define P 1024
 #define Q 4			//基礎体
-#define N Q*Q			//定義体
-#define I Q+1			//曲線の次数
+#define N (Q*Q)			//定義体
+#define I (Q+1)			//曲線の次数
 #define J 3
 #define K I-2			//number h
 #define H (K+1)*(K+2)/2		//シンドローム行列の横ベクトルの長さ
-#define F (J-K+1)*(J-K+2)/2	//シンドローム行列の縦ベクトル
+//#define F (J-K+1)*(J-K+2)/2	//シンドローム行列の縦ベクトル
 #define U 26
 #define E 5
 
@@ -46,7 +46,7 @@ typedef struct
 //4-dimension,100000000-terms,100-degree
 typedef struct {
 
-  unsigned char m[DEG][DEG][DEG][DEG];
+  unsigned char m[DEG][DEG];
 
 } mvx;
 
@@ -158,7 +158,7 @@ param (int n, int g)
   printf ("n=%d ", n);
   printf ("k=%d\n", U);
   printf ("d=%d\n", U - g + 1);
-  printf ("t=%d~%d\n", (U - g) / 2);
+  printf ("t=%d\n", (U - g) / 2);
 
   delta = 1;
   ips = 0;
@@ -821,8 +821,27 @@ set_curve (unsigned short a[9][4], int x)
   return s;
 }
 
+mvx madd(mvx a,mvx b){
+int i,j;
 
+for(i=0;i<DEG;i++){
+  for(j=0;j<DEG;j++)
+  a.m[i][j]^=b.m[i][j];
+}
 
+return a;
+}
+
+void printm(mvx m){
+  int i,j;
+
+  for(i=0;i<DEG;i++){
+    for(j=0;j<DEG;j++)
+    if(m.m[i][j]>0)
+    printf("%d*x^%dy^%d+",m.m[i][j],i,j);
+  }
+
+}
 
 int
 main (void)
@@ -954,14 +973,13 @@ main (void)
   //F->m=(unsigned short*)malloc(sizeof(unsigned short)*100000000);
     for(i=0;i<100;i++){
       for(j=0;j<100;j++){
-	for(k=0;k<100;k++){
-	  for(ii=0;ii<1;ii++){
-	    if((F[0].m[i][j][k][ii])==0)
-	    printf("%d,",F[0].m[i][j][k][ii]);
+//	for(k=0;k<100;k++){
+//	  for(ii=0;ii<1;ii++){
+	    if((F[0].m[i][j])==0)
+	    printf("%d,",F[0].m[i][j]);
 	  }
 	}
-      }
-    }
+ 
     
     //free(F);    
     exit(1);
