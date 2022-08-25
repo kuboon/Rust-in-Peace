@@ -174,15 +174,22 @@ fn main() {
     let mut v = PO {
         z: vec![vec![1, 1, 1], vec![1, 1, 1]],
     };
-    let mut y = Vec::new();
+    let mut y: Vec<u8>;
 
-     v.z[0][1] = 3;
+    //  let mut t=Vec::new();
+    v.z[0][1] = 3;
     println!("{:?}", v.z);
     for i in 2..10 {
-        y = vec![i, i + 1];
-        v.z.push(y);
-        println!("{:?}", v.z);
-    }
+      y = vec![i, i + 1];
+      v.z.push(y);
+      println!("{:?}", v.z);
+  }
+  for i in 2..10 {
+      let y: Vec<u8> = [i, i + 1].to_vec();
+      v.z.push(y); //vec![i, i + 1]);
+      println!("{:?}", v.z);
+  }
+
     // return;
 
     mt = msm(mt);
