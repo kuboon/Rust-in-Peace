@@ -21,6 +21,11 @@ struct MP{
   t:i32,
 }
 
+#[derive(Clone)]
+struct PO {
+  z: Vec<Vec<u8>>,
+}
+
 #[derive(Copy, Clone)]
 struct MVX
 {
@@ -193,7 +198,18 @@ fn main()
   let cx:MVX;
   let za:MP;
   let tm:MVX;
+  let mut v = PO{z:vec![vec![1,1,1],vec![1,1,1]]};
 
+//  let mut t=Vec::new(); 
+
+  println!("{:?}",v.z);
+  v.z[0]=vec![0,0,0];
+  //t=v.z;
+  println!("{:?}",v.z);
+
+ // return;
+
+  
   mt=msm(mt);
   printm(mt);
   print!("\n");
@@ -211,5 +227,6 @@ fn main()
   tm = m2v(za);
   printm(tm);
   print!("\n");
+
 
 }
