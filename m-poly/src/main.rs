@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::{i16, i32};
 extern crate ndarray;
 //use rand::prelude::*;
@@ -6,7 +7,7 @@ use std::mem::MaybeUninit;
 pub const GF: [i8; 16] = [0, 1, 2, 4, 8, 9, 11, 15, 7, 14, 5, 10, 13, 3, 6, 12];
 pub const FG: [i8; 16] = [0, 1, 2, 13, 3, 10, 14, 8, 4, 5, 11, 6, 15, 12, 9, 7];
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct MTERM {
     n: [i16; 3],
     a: i32,
@@ -30,22 +31,17 @@ struct MVX {
 
 fn v2m(x: MVX) -> MP //配列型から多項式型への変換
 {
-    let mut count: i32;
-    let mut o: MP = unsafe { MaybeUninit::uninit().assume_init() };
-    count = 0;
+    let mut mterm_vec: Vec<MTERM> = Vec::new();
     for it in 0..20 {
         for be in 0..20 {
             if x.m[it][be] > 0 {
-                o.x[count as usize].n[0] = it as i16;
-                o.x[count as usize].n[1] = be as i16;
-                o.x[count as usize].a = x.m[it][be] as i32;
-                count = count + 1;
+                let mterm = MTERM { n: [it as i16, be as i16, 0], a: x.m[it][be] as i32 };
+                mterm_vec.push(mterm);
             }
         }
     }
-    o.t = count;
-
-    return o;
+    let count = mterm_vec.len() as i32;
+    return MP {x: mterm_vec.try_into().unwrap(), t: count};
 }
 
 fn m2v(x: MP) -> MVX //多項式から配列型への変換
